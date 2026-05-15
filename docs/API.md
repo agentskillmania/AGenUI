@@ -15,6 +15,14 @@ The global entry point, responsible for engine initialization, theme registratio
 | Android | `AGenUI.getInstance().initialize(Context applicationContext)` | Must be called before creating any `SurfaceManager` |
 | iOS | No explicit initialization needed | Triggered automatically on first `SurfaceManager` creation |
 | HarmonyOS | No explicit initialization needed | Triggered automatically on first `SurfaceManager` creation |
+| Web | `AGenUI.initialize(options?: { wasmUrl?: string })` | Async; loads WASM parser. Optional custom WASM URL |
+
+```typescript
+// Web
+await AGenUI.initialize();
+// Or with custom WASM URL:
+// await AGenUI.initialize({ wasmUrl: '/path/to/agenui_parser.wasm' });
+```
 
 ```java
 // Android — call in Application.onCreate()
@@ -30,6 +38,12 @@ Sets the global day/night mode. After switching, already-rendered Surfaces autom
 | Android | `void setDayNightMode(String mode)` |
 | iOS | `static func setDayNightMode(_ mode: String)` |
 | HarmonyOS | `static setDayNightMode(mode: string): void` |
+| Web | `AGenUI.setDayNightMode(mode: string): void` |
+
+```typescript
+// Web
+AGenUI.setDayNightMode('dark');
+```
 
 `mode` accepted values: `"light"` / `"dark"`
 
@@ -57,6 +71,7 @@ Registers the default theme configuration and design tokens. Should be called be
 | Android | `void registerDefaultTheme(String theme, String designToken) throws ThemeException` |
 | iOS | `static func registerDefaultTheme(_ theme: String, designToken: String) -> AGenUIError` |
 | HarmonyOS | `static registerDefaultTheme(theme: string, designToken: string): boolean` |
+| Web | `AGenUI.registerDefaultTheme(theme: string, designToken: string): void` |
 
 **Error handling**
 
@@ -65,6 +80,7 @@ Registers the default theme configuration and design tokens. Should be called be
 | Android | `ThemeException` (checked exception) | Thrown when theme JSON is malformed |
 | iOS | `AGenUIError` (return value) | Failure when `result == false`; see the `message` field |
 | HarmonyOS | `boolean` (return value) | Returns `false` on failure |
+| Web | Throws `Error` | Synchronously throws on invalid JSON |
 
 ```java
 // Android
@@ -127,6 +143,13 @@ Each `SurfaceManager` instance corresponds to an independent streaming session; 
 | Android | `new SurfaceManager(Activity activity)` |
 | iOS | `SurfaceManager()` |
 | HarmonyOS | `new SurfaceManager(context: UIAbilityContext)` |
+| Web | `new SurfaceManager()` | Async initialization via `sm.initialize()` |
+
+```typescript
+// Web
+const surfaceManager = new SurfaceManager();
+await surfaceManager.initialize();
+```
 
 - Android requires `AGenUI.getInstance().initialize(context)` to be completed first; otherwise an `IllegalStateException` is thrown.
 - iOS / HarmonyOS trigger engine initialization automatically during construction.
@@ -155,6 +178,15 @@ Full call order: `beginTextStream()` → `receiveTextChunk(chunk)` × N → `end
 | Android | `void beginTextStream()` | `void receiveTextChunk(String dataString)` | `void endTextStream()` |
 | iOS | `func beginTextStream()` | `func receiveTextChunk(_ dataString: String)` | `func endTextStream()` |
 | HarmonyOS | `beginTextStream(): void` | `receiveTextChunk(dataString: string): void` | `endTextStream(): void` |
+| Web | `engine.beginTextStream(surfaceId: string): void` | `engine.receiveTextChunk(surfaceId: string, data: string): void` | `engine.endTextStream(surfaceId: string): void` |
+
+```typescript
+// Web — access via surfaceManager.getEngine()
+const engine = surfaceManager.getEngine();
+engine.beginTextStream('my-surface');
+engine.receiveTextChunk('my-surface', chunk);
+engine.endTextStream('my-surface');
+```
 
 - `beginTextStream()` starts a new streaming session and clears the internal buffer.
 - `receiveTextChunk()` supports fragmented delivery or a single complete JSON payload.
@@ -181,6 +213,7 @@ Add or remove Surface lifecycle listeners. All platforms support registering mul
 | Android | `void addListener(ISurfaceManagerListener listener)` / `void removeListener(ISurfaceManagerListener listener)` |
 | iOS | `func addListener(_ listener: SurfaceManagerListener)` / `func removeListener(_ listener: SurfaceManagerListener)` / `func removeAllListeners()` |
 | HarmonyOS | `addListener(listener: ISurfaceManagerListener): void` / `removeListener(listener: ISurfaceManagerListener): void` / `removeAllListeners(): void` |
+| Web | Events via `AGenUISurface` props — `onAction`, `onInteractionStatus` | React component callbacks; no listener registration needed |
 
 > iOS stores listeners as weak references, so there is no risk of retain cycles.
 
@@ -211,6 +244,7 @@ Returns the native instance id assigned by the engine on creation.
 | Android | `void destroy()` | Destroys all Surfaces, removes all listeners, releases NativeEventBridge resources |
 | iOS | Executed automatically on `deinit` | Call `removeAllListeners()` to ensure no retain cycles |
 | HarmonyOS | `destroy(): void` | Destroys all Surfaces and releases native resources |
+| Web | `surfaceManager.destroy(): void` | Destroys engine, clears surfaces, removes event listeners |
 
 ---
 
@@ -855,6 +889,7 @@ if (!success) {
 - **Android**: Call `surface.getContainer()` in the `onCreateSurface` callback. It returns a `FrameLayout` (MATCH_PARENT × WRAP_CONTENT) that you can `addView` directly to your layout.
 - **iOS**: Use `surface.view` in the `onCreateSurface` callback. Call `addSubview` on the target view and set layout constraints.
 - **HarmonyOS**: Save `surface.surfaceId` in the `onCreateSurface` callback, then render with `AGenUIContainer({ surfaceId: this.surfaceId })` in `build()`.
+- **Web**: Render `<AGenUISurface surfaceManager={surfaceManager} height={600} />` directly in JSX. The component manages the DOM container internally.
 
 **Q2: How do I make a Surface height auto-size to its content?**
 
@@ -867,6 +902,7 @@ if (!success) {
   ```
 - **iOS**: Do not set a fixed height constraint — the Surface will size to fit its content automatically.
 - **HarmonyOS**: `AGenUIContainer` defaults to wrap-content height; no extra handling is needed.
+- **Web**: Pass `height="auto"` or omit the `height` prop to let the Surface expand to fit its content.
 
 **Q3: How do I get a Surface's unique ID in `onDeleteSurface`?**
 
@@ -892,6 +928,104 @@ AGenUISDK.setDayNightMode("dark")
 // HarmonyOS
 AGenUI.registerDefaultTheme(themeJson, designTokenJson);
 AGenUI.setDayNightMode('dark');
+```
+
+```typescript
+// Web
+AGenUI.registerDefaultTheme(themeJson, designTokenJson);
+AGenUI.setDayNightMode('dark');
+```
+
+---
+
+## Web API
+
+Web uses a React component architecture. Unlike native platforms that use listeners and native containers, Web renders Surfaces directly through the `AGenUISurface` React component and manages state via the JS `SurfaceEngine`.
+
+### SurfaceEngine
+
+Accessed via `surfaceManager.getEngine()`. The JS engine replaces the native C++ SurfaceCoordinator, handling component tree state, parent-child relationships, and event emission.
+
+#### Methods
+
+| Method | Signature | Description |
+|---|---|---|
+| `createSurface` | `createSurface(surfaceId: string, catalogId: string, theme: Record<string, string>): void` | Creates a new Surface and registers it with the engine |
+| `updateComponents` | `updateComponents(surfaceId: string, componentsJson: string[]): void` | Batch replaces all components for a Surface. Each element is a JSON string |
+| `updateComponent` | `updateComponent(surfaceId: string, componentJson: string): void` | Incrementally updates a single component by ID |
+| `deleteSurface` | `deleteSurface(surfaceId: string): void` | Destroys a Surface and all its components |
+| `beginTextStream` | `beginTextStream(surfaceId: string): void` | Starts a new streaming session for A2UI protocol parsing |
+| `receiveTextChunk` | `receiveTextChunk(surfaceId: string, data: string): void` | Feeds a chunk of streaming data to the WASM parser |
+| `endTextStream` | `endTextStream(surfaceId: string): void` | Ends the streaming session and flushes buffers |
+| `getSurface` | `getSurface(surfaceId: string): SurfaceState \| null` | Retrieves the internal Surface state |
+| `getSurfaceIds` | `getSurfaceIds(): string[]` | Returns all registered Surface IDs |
+| `addListener` | `addListener(handler: (event: SurfaceEvent) => void): () => void` | Subscribes to engine events; returns an unsubscribe function |
+
+#### SurfaceEvent types
+
+| Type | Payload | Triggered when |
+|---|---|---|
+| `createSurface` | `{ surfaceId: string }` | A new Surface is created |
+| `updateComponents` | `{ surfaceId: string }` | Components are updated (batch or single) |
+| `deleteSurface` | `{ surfaceId: string }` | A Surface is destroyed |
+| `action` | `ActionEvent` | A user interacts with a component (button click, etc.) |
+
+### AGenUISurface (React Component)
+
+```tsx
+import { AGenUISurface } from '@agenui/web';
+
+<AGenUISurface
+  surfaceManager={surfaceManager}
+  width="100%"
+  height={600}
+  onAction={(action) => console.log(action)}
+  onInteractionStatus={(type, content) => console.log(type, content)}
+/>
+```
+
+#### Props
+
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `surfaceManager` | `SurfaceManager` | Yes | The initialized SurfaceManager instance |
+| `width` | `number \| string` | No | Container width, default `"100%"` |
+| `height` | `number \| string` | No | Container height, default `"100%"` |
+| `onAction` | `(action: ActionEvent) => void` | No | Callback for component interaction events |
+| `onInteractionStatus` | `(type: number, content: string) => void` | No | Callback for interaction status changes |
+| `style` | `React.CSSProperties` | No | Additional container styles |
+| `className` | `string` | No | Additional CSS class names |
+
+#### ActionEvent
+
+```typescript
+interface ActionEvent {
+  surfaceId: string;
+  sourceComponentId: string;
+  context?: Record<string, unknown>;
+}
+```
+
+### Component Registry
+
+Register custom components or override built-in ones:
+
+```tsx
+import { registerComponent } from '@agenui/web';
+
+registerComponent('MyCustom', MyCustomComponent);
+```
+
+The component receives:
+
+```typescript
+interface AGenUIComponentProps {
+  id: string;
+  type: string;
+  properties: Record<string, unknown>;
+  children?: React.ReactNode;
+  onAction?: (action: string, context?: Record<string, unknown>) => void;
+}
 ```
 
 ---

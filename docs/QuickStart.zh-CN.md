@@ -305,6 +305,164 @@ deinit {
 
 ---
 
+## Web
+
+### 前提条件
+
+- Node.js 18 或更高版本
+- npm 9 或更高版本
+- React 18 或更高版本
+
+### 安装
+
+**方式一：本地路径（npm 发布前）**
+
+```bash
+# 先构建 SDK
+cd platforms/web
+npm run build
+
+# 在你的项目中安装
+cd your-react-project
+npm install /absolute/path/to/platforms/web
+```
+
+**方式二：npm（发布后）**
+
+```bash
+npm install @agenui/web
+```
+
+**Peer dependencies**
+
+```bash
+npm install react react-dom antd @ant-design/icons @antv/g2plot lottie-react react-markdown dayjs
+```
+
+### 使用
+
+**1. 初始化引擎**
+
+```tsx
+import { AGenUI } from '@agenui/web';
+
+await AGenUI.initialize();
+// 也可以传入自定义 WASM URL：
+// await AGenUI.initialize({ wasmUrl: '/path/to/agenui_parser.wasm' });
+```
+
+**2. 创建 SurfaceManager 并渲染 UI**
+
+```tsx
+import { SurfaceManager, AGenUISurface } from '@agenui/web';
+import { useEffect, useState } from 'react';
+
+function App() {
+  const [surfaceManager, setSurfaceManager] = useState<SurfaceManager | null>(null);
+
+  useEffect(() => {
+    const init = async () => {
+      await AGenUI.initialize();
+      const sm = new SurfaceManager();
+      await sm.initialize();
+
+      const engine = sm.getEngine();
+      engine.createSurface('my-surface', 'urn:a2ui:catalog:agenui_catalog', {
+        themeId: 'default',
+      });
+
+      // 喂组件数据（A2UI 协议 JSON）
+      engine.updateComponents('my-surface', [
+        JSON.stringify({
+          id: 'root',
+          type: 'Column',
+          children: ['helloCard'],
+        }),
+        JSON.stringify({
+          id: 'helloCard',
+          type: 'Card',
+          title: 'Hello AGenUI',
+          children: ['helloText'],
+        }),
+        JSON.stringify({
+          id: 'helloText',
+          type: 'Text',
+          text: '这是你的第一个 AGenUI Surface',
+        }),
+      ]);
+
+      setSurfaceManager(sm);
+    };
+
+    init();
+    return () => sm?.destroy();
+  }, []);
+
+  if (!surfaceManager) return <div>Loading WASM...</div>;
+
+  return (
+    <AGenUISurface
+      surfaceManager={surfaceManager}
+      height={600}
+      onAction={(action) => console.log('用户操作:', action)}
+    />
+  );
+}
+```
+
+**3. 接收来自 LLM 流的 A2UI 协议数据**
+
+```tsx
+const engine = surfaceManager.getEngine();
+
+// 标记开始一轮流式数据
+engine.beginTextStream('my-surface');
+
+// 每收到一个数据块时调用
+engine.receiveTextChunk('my-surface', chunk);
+// 其他流式数据...
+
+// 标记结束
+engine.endTextStream('my-surface');
+```
+
+**4. 处理组件交互事件**
+
+```tsx
+<AGenUISurface
+  surfaceManager={surfaceManager}
+  onAction={(action) => {
+    console.log('来源组件:', action.sourceComponentId);
+    console.log('上下文:', action.context);
+  }}
+/>
+```
+
+**5. 动态更新单个组件**
+
+```tsx
+// 例如点击按钮后打开弹窗
+engine.updateComponent('my-surface', JSON.stringify({
+  id: 'modal1',
+  type: 'Modal',
+  title: 'Demo Modal',
+  open: true,
+}));
+```
+
+**6. 释放资源**
+
+```tsx
+useEffect(() => {
+  // ... 初始化代码
+  return () => {
+    surfaceManager?.destroy();
+  };
+}, []);
+```
+
+---
+
 ## HarmonyOS
 
 ### 前提条件

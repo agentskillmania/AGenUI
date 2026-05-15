@@ -309,6 +309,164 @@ deinit {
 
 ---
 
+## Web
+
+### Prerequisites
+
+- Node.js 18 or later
+- npm 9 or later
+- React 18 or later
+
+### Installation
+
+**Option 1: Local path (before npm publish)**
+
+```bash
+# Build the SDK first
+cd platforms/web
+npm run build
+
+# Install in your project
+cd your-react-project
+npm install /absolute/path/to/platforms/web
+```
+
+**Option 2: npm (after publish)**
+
+```bash
+npm install @agenui/web
+```
+
+**Peer dependencies**
+
+```bash
+npm install react react-dom antd @ant-design/icons @antv/g2plot lottie-react react-markdown dayjs
+```
+
+### Usage
+
+**1. Initialize the engine**
+
+```tsx
+import { AGenUI } from '@agenui/web';
+
+await AGenUI.initialize();
+// Optionally pass a custom WASM URL:
+// await AGenUI.initialize({ wasmUrl: '/path/to/agenui_parser.wasm' });
+```
+
+**2. Create a SurfaceManager and render UI**
+
+```tsx
+import { SurfaceManager, AGenUISurface } from '@agenui/web';
+import { useEffect, useState } from 'react';
+
+function App() {
+  const [surfaceManager, setSurfaceManager] = useState<SurfaceManager | null>(null);
+
+  useEffect(() => {
+    const init = async () => {
+      await AGenUI.initialize();
+      const sm = new SurfaceManager();
+      await sm.initialize();
+
+      const engine = sm.getEngine();
+      engine.createSurface('my-surface', 'urn:a2ui:catalog:agenui_catalog', {
+        themeId: 'default',
+      });
+
+      // Feed component data (A2UI protocol JSON)
+      engine.updateComponents('my-surface', [
+        JSON.stringify({
+          id: 'root',
+          type: 'Column',
+          children: ['helloCard'],
+        }),
+        JSON.stringify({
+          id: 'helloCard',
+          type: 'Card',
+          title: 'Hello AGenUI',
+          children: ['helloText'],
+        }),
+        JSON.stringify({
+          id: 'helloText',
+          type: 'Text',
+          text: 'This is your first AGenUI Surface',
+        }),
+      ]);
+
+      setSurfaceManager(sm);
+    };
+
+    init();
+    return () => sm?.destroy();
+  }, []);
+
+  if (!surfaceManager) return <div>Loading WASM...</div>;
+
+  return (
+    <AGenUISurface
+      surfaceManager={surfaceManager}
+      height={600}
+      onAction={(action) => console.log('User action:', action)}
+    />
+  );
+}
+```
+
+**3. Feed streaming data from LLM**
+
+```tsx
+const engine = surfaceManager.getEngine();
+
+// Mark the start of a streaming session
+engine.beginTextStream('my-surface');
+
+// Call for each incoming chunk
+engine.receiveTextChunk('my-surface', chunk);
+// More chunks...
+
+// Mark the end
+engine.endTextStream('my-surface');
+```
+
+**4. Handle component actions**
+
+```tsx
+<AGenUISurface
+  surfaceManager={surfaceManager}
+  onAction={(action) => {
+    console.log('Source:', action.sourceComponentId);
+    console.log('Context:', action.context);
+  }}
+/>
+```
+
+**5. Update a single component dynamically**
+
+```tsx
+// e.g., open a modal after button click
+engine.updateComponent('my-surface', JSON.stringify({
+  id: 'modal1',
+  type: 'Modal',
+  title: 'Demo Modal',
+  open: true,
+}));
+```
+
+**6. Release resources**
+
+```tsx
+useEffect(() => {
+  // ... init code
+  return () => {
+    surfaceManager?.destroy();
+  };
+}, []);
+```
+
+---
+
 ## HarmonyOS
 
 ### Prerequisites

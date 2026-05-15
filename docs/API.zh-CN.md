@@ -30,6 +30,12 @@ AGenUI.getInstance().initialize(this);
 | Android | `void setDayNightMode(String mode)` |
 | iOS | `static func setDayNightMode(_ mode: String)` |
 | HarmonyOS | `static setDayNightMode(mode: string): void` |
+| Web | `AGenUI.setDayNightMode(mode: string): void` |
+
+```typescript
+// Web
+AGenUI.setDayNightMode('dark');
+```
 
 `mode` 可选值：`"light"` / `"dark"`
 
@@ -57,6 +63,7 @@ AGenUI.setDayNightMode('dark');
 | Android | `void registerDefaultTheme(String theme, String designToken) throws ThemeException` |
 | iOS | `static func registerDefaultTheme(_ theme: String, designToken: String) -> AGenUIError` |
 | HarmonyOS | `static registerDefaultTheme(theme: string, designToken: string): boolean` |
+| Web | `AGenUI.registerDefaultTheme(theme: string, designToken: string): void` |
 
 **错误处理**
 
@@ -127,6 +134,13 @@ if (!success) {
 | Android | `new SurfaceManager(Activity activity)` |
 | iOS | `SurfaceManager()` |
 | HarmonyOS | `new SurfaceManager(context: UIAbilityContext)` |
+| Web | `new SurfaceManager()` | 需异步调用 `sm.initialize()` 初始化 |
+
+```typescript
+// Web
+const surfaceManager = new SurfaceManager();
+await surfaceManager.initialize();
+```
 
 - Android 需先完成 `AGenUI.getInstance().initialize(context)` 才可构造，否则抛出 `IllegalStateException`
 - iOS / HarmonyOS 构造时自动触发引擎初始化
@@ -155,6 +169,15 @@ const surfaceManager = new SurfaceManager(context);
 | Android | `void beginTextStream()` | `void receiveTextChunk(String dataString)` | `void endTextStream()` |
 | iOS | `func beginTextStream()` | `func receiveTextChunk(_ dataString: String)` | `func endTextStream()` |
 | HarmonyOS | `beginTextStream(): void` | `receiveTextChunk(dataString: string): void` | `endTextStream(): void` |
+| Web | `engine.beginTextStream(surfaceId: string): void` | `engine.receiveTextChunk(surfaceId: string, data: string): void` | `engine.endTextStream(surfaceId: string): void` |
+
+```typescript
+// Web — 通过 surfaceManager.getEngine() 访问
+const engine = surfaceManager.getEngine();
+engine.beginTextStream('my-surface');
+engine.receiveTextChunk('my-surface', chunk);
+engine.endTextStream('my-surface');
+```
 
 - `beginTextStream()` 开始新的流式会话，清空内部缓冲区
 - `receiveTextChunk()` 支持分片传输，也可一次性传入完整 JSON
@@ -181,6 +204,7 @@ const surfaceManager = new SurfaceManager(context);
 | Android | `void addListener(ISurfaceManagerListener listener)` / `void removeListener(ISurfaceManagerListener listener)` |
 | iOS | `func addListener(_ listener: SurfaceManagerListener)` / `func removeListener(_ listener: SurfaceManagerListener)` / `func removeAllListeners()` |
 | HarmonyOS | `addListener(listener: ISurfaceManagerListener): void` / `removeListener(listener: ISurfaceManagerListener): void` / `removeAllListeners(): void` |
+| Web | 通过 `AGenUISurface` 的 props — `onAction`、`onInteractionStatus` | React 组件回调，无需注册 listener |
 
 > iOS 的监听器以弱引用方式存储，无需担心循环引用。
 
@@ -211,6 +235,7 @@ const surfaceManager = new SurfaceManager(context);
 | Android | `void destroy()` | 销毁所有 Surface，移除所有监听器，释放 NativeEventBridge 资源 |
 | iOS | 随对象 `deinit` 自动执行 | 调用 `removeAllListeners()` 可确保无循环引用 |
 | HarmonyOS | `destroy(): void` | 销毁所有 Surface，释放 Native 资源 |
+| Web | `surfaceManager.destroy(): void` | 销毁引擎，清空 Surface，移除事件监听 |
 
 ---
 
@@ -855,6 +880,7 @@ if (!success) {
 - **Android**：在 `onCreateSurface` 回调中调用 `surface.getContainer()`，返回一个 `FrameLayout`（MATCH_PARENT × WRAP_CONTENT），直接 `addView` 到布局中。
 - **iOS**：在 `onCreateSurface` 回调中使用 `surface.view`，将其 `addSubview` 到目标视图并设置布局约束。
 - **HarmonyOS**：在 `onCreateSurface` 回调中保存 `surface.surfaceId`，在 `build()` 中使用 `AGenUIContainer({ surfaceId: this.surfaceId })` 渲染。
+- **Web**：直接在 JSX 中渲染 `<AGenUISurface surfaceManager={surfaceManager} height={600} />`，组件内部管理 DOM 容器。
 
 **Q2：如何实现 Surface 高度自适应内容？**
 
@@ -867,6 +893,7 @@ if (!success) {
   ```
 - **iOS**：将高度约束设为自动（不设固定高度），Surface 会根据内容自适应。
 - **HarmonyOS**：`AGenUIContainer` 默认高度为 wrap-content，无需额外处理。
+- **Web**：传入 `height="auto"` 或不传 `height` prop，让 Surface 根据内容自适应高度。
 
 **Q3：如何在 `onDeleteSurface` 中获取 Surface 的唯一标识？**
 
@@ -892,6 +919,104 @@ AGenUISDK.setDayNightMode("dark")
 // HarmonyOS
 AGenUI.registerDefaultTheme(themeJson, designTokenJson);
 AGenUI.setDayNightMode('dark');
+```
+
+```typescript
+// Web
+AGenUI.registerDefaultTheme(themeJson, designTokenJson);
+AGenUI.setDayNightMode('dark');
+```
+
+---
+
+## Web API
+
+Web 采用 React 组件架构。与原生平台使用监听器和原生容器不同，Web 通过 `AGenUISurface` React 组件直接渲染 Surface，并通过 JS `SurfaceEngine` 管理状态。
+
+### SurfaceEngine
+
+通过 `surfaceManager.getEngine()` 获取。JS 引擎替代了原生 C++ 的 SurfaceCoordinator，负责组件树状态、父子关系管理和事件分发。
+
+#### 方法
+
+| 方法 | 签名 | 说明 |
+|---|---|---|
+| `createSurface` | `createSurface(surfaceId: string, catalogId: string, theme: Record<string, string>): void` | 创建新 Surface 并注册到引擎 |
+| `updateComponents` | `updateComponents(surfaceId: string, componentsJson: string[]): void` | 批量替换 Surface 的全部组件，每个元素为 JSON 字符串 |
+| `updateComponent` | `updateComponent(surfaceId: string, componentJson: string): void` | 增量更新单个组件（按 ID） |
+| `deleteSurface` | `deleteSurface(surfaceId: string): void` | 销毁 Surface 及其所有组件 |
+| `beginTextStream` | `beginTextStream(surfaceId: string): void` | 开始新的 A2UI 协议流式解析会话 |
+| `receiveTextChunk` | `receiveTextChunk(surfaceId: string, data: string): void` | 向 WASM 解析器喂入流式数据块 |
+| `endTextStream` | `endTextStream(surfaceId: string): void` | 结束流式会话并刷新缓冲区 |
+| `getSurface` | `getSurface(surfaceId: string): SurfaceState \| null` | 获取内部 Surface 状态 |
+| `getSurfaceIds` | `getSurfaceIds(): string[]` | 返回所有已注册的 Surface ID |
+| `addListener` | `addListener(handler: (event: SurfaceEvent) => void): () => void` | 订阅引擎事件；返回取消订阅函数 |
+
+#### SurfaceEvent 类型
+
+| 类型 | 载荷 | 触发时机 |
+|---|---|---|
+| `createSurface` | `{ surfaceId: string }` | 新 Surface 创建时 |
+| `updateComponents` | `{ surfaceId: string }` | 组件更新时（批量或单个） |
+| `deleteSurface` | `{ surfaceId: string }` | Surface 销毁时 |
+| `action` | `ActionEvent` | 用户与组件交互时（按钮点击等） |
+
+### AGenUISurface（React 组件）
+
+```tsx
+import { AGenUISurface } from '@agenui/web';
+
+<AGenUISurface
+  surfaceManager={surfaceManager}
+  width="100%"
+  height={600}
+  onAction={(action) => console.log(action)}
+  onInteractionStatus={(type, content) => console.log(type, content)}
+/>
+```
+
+#### Props
+
+| 属性 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `surfaceManager` | `SurfaceManager` | 是 | 已初始化的 SurfaceManager 实例 |
+| `width` | `number \| string` | 否 | 容器宽度，默认 `"100%"` |
+| `height` | `number \| string` | 否 | 容器高度，默认 `"100%"` |
+| `onAction` | `(action: ActionEvent) => void` | 否 | 组件交互事件回调 |
+| `onInteractionStatus` | `(type: number, content: string) => void` | 否 | 交互状态变化回调 |
+| `style` | `React.CSSProperties` | 否 | 额外容器样式 |
+| `className` | `string` | 否 | 额外 CSS 类名 |
+
+#### ActionEvent
+
+```typescript
+interface ActionEvent {
+  surfaceId: string;
+  sourceComponentId: string;
+  context?: Record<string, unknown>;
+}
+```
+
+### 组件注册
+
+注册自定义组件或覆盖内置组件：
+
+```tsx
+import { registerComponent } from '@agenui/web';
+
+registerComponent('MyCustom', MyCustomComponent);
+```
+
+组件接收的参数：
+
+```typescript
+interface AGenUIComponentProps {
+  id: string;
+  type: string;
+  properties: Record<string, unknown>;
+  children?: React.ReactNode;
+  onAction?: (action: string, context?: Record<string, unknown>) => void;
+}
 ```
 
 ---

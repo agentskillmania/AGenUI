@@ -1184,11 +1184,22 @@
             },
             "chartType": {
               "type": "string",
-              "description": "Chart visualization type.",
+              "description": "The type of chart to display. Supports bar, line, area, column, scatter, pie, donut, radar, gauge, rose, funnel, heatmap, treemap, wordCloud, and bar_grouped chart.",
               "enum": [
                 "line",
+                "area",
+                "column",
+                "scatter",
+                "pie",
                 "donut",
-                "bar"
+                "radar",
+                "gauge",
+                "rose",
+                "funnel",
+                "heatmap",
+                "treemap",
+                "wordCloud",
+                "bar_grouped"
               ]
             },
             "data": {

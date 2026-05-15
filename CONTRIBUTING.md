@@ -1,6 +1,6 @@
 # Contributing to AGenUI
 
-Thank you for your interest in AGenUI! AGenUI is a cross-platform UI rendering engine that bridges declarative UI descriptions with native rendering across iOS, Android, and HarmonyOS, powered by a shared C++ core. Contributions of all kinds are welcome — bug fixes, new features, documentation improvements, and test coverage all make the project better.
+Thank you for your interest in AGenUI! AGenUI is a cross-platform UI rendering engine that bridges declarative UI descriptions with native rendering across iOS, Android, HarmonyOS, and Web, powered by a shared C++ core. Contributions of all kinds are welcome — bug fixes, new features, documentation improvements, and test coverage all make the project better.
 
 We are committed to providing a welcoming and inclusive environment for everyone. Please take a moment to read this guide before submitting your first contribution.
 
@@ -100,6 +100,14 @@ Follow the **Google Java Style Guide**:
 
 Follow the **OpenHarmony ArkTS Coding Style Guide**:
 [https://gitee.com/openharmony/docs/blob/master/en/contribute/OpenHarmony-ArkTS-coding-style-guide.md](https://gitee.com/openharmony/docs/blob/master/en/contribute/OpenHarmony-ArkTS-coding-style-guide.md)
+
+### TypeScript / React
+
+Follow the **Google TypeScript Style Guide**:
+[https://google.github.io/styleguide/tsguide.html](https://google.github.io/styleguide/tsguide.html)
+
+Supplementary reference — **React TypeScript Cheatsheet** (for component prop types and hooks patterns):
+[https://react-typescript-cheatsheet.netlify.app/](https://react-typescript-cheatsheet.netlify.app/)
 
 
 

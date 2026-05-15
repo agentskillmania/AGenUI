@@ -7,7 +7,7 @@
 <img src="docs/images/hero.gif" alt="AGenUI 跨 iOS / Android / HarmonyOS 流式渲染生成式 UI" width="640"/>
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-iOS%20%7C%20Android%20%7C%20HarmonyOS-blue)](#)
+[![Platform](https://img.shields.io/badge/Platform-iOS%20%7C%20Android%20%7C%20HarmonyOS%20%7C%20Web-blue)](#)
 [![Android SDK](https://img.shields.io/badge/Android-API%2021%2B-green)](#)
 [![iOS](https://img.shields.io/badge/iOS-13%2B-lightgrey)](#)
 [![HarmonyOS](https://img.shields.io/badge/HarmonyOS%20NEXT-API%2017%2B-red)](#)
@@ -36,7 +36,7 @@
 
 ## 什么是 AGenUI？
 
-**AGenUI** 是同步支持 iOS、Android 和 HarmonyOS 三端的 A2UI SDK，它基于并完整实现了 [Google 开源的 A2UI v0.9 协议](https://github.com/google/A2UI)，能够在移动设备上实时渲染 LLM 生成的可交互界面 UI 的流式数据。它底层由一个跨平台的**共享 C++ 核心引擎**驱动，三端渲染引擎则基于核心引擎下发的组件协议，使用系统原生能力完成绘制。
+**AGenUI** 是同步支持 iOS、Android、HarmonyOS 和 Web 四端的 A2UI SDK，它基于并完整实现了 [Google 开源的 A2UI v0.9 协议](https://github.com/google/A2UI)，能够在移动设备上实时渲染 LLM 生成的可交互界面 UI 的流式数据。它底层由一个跨平台的**共享 C++ 核心引擎**驱动，三端渲染引擎则基于核心引擎下发的组件协议，使用系统原生能力完成绘制。
 
 **AGenUI** 采用系统原生 UI 能力绘制**可交互的卡片、表单、列表、图片、媒体播放器等**，提供高性能、流畅的操作体验。
 
@@ -47,8 +47,8 @@
 ## 核心特性
 
 - **实时流式渲染** — 组件描述的结构化数据由 LLM 生成，流式增量出现并实时更新
-- **高性能** — iOS、Android 和 HarmonyOS 三端的原生渲染能力，页面滚动等核心场景中刷新帧率维持 120 fps
-- **22 个内置组件** — 18 个 A2UI 协议组件 + 4 个 SDK 扩展组件
+- **高性能** — iOS、Android、HarmonyOS 和 Web 四端的渲染能力，页面滚动等核心场景中刷新帧率维持 120 fps
+- **25 个内置组件** — 18 个 A2UI 协议组件 + 4 个 SDK 扩展组件 + 3 个 Playground 示例组件
 - **自定义组件 API** — 支持通过自定义组件 API 注册扩展原生组件，LLM 可通过组件名称生成组件描述数据
 - **Function Call 集成** — 支持注册端侧工具/函数，LLM 可指定执行特定的工具/函数
 - **Design Token 与主题** — 同步支持三端的 Design Token 和主题模式
@@ -73,7 +73,8 @@ C++ 层实现三端通用的流式数据解析、虚拟组件树管理、绘制�
 | `platforms/ios/` | iOS 组件渲染器 + Objective-C 桥接层 |
 | `platforms/android/` | Android 组件渲染器 + JNI 桥接层 |
 | `platforms/harmony/` | HarmonyOS 组件渲染器 + NAPI 桥接层 |
-| `playground/` | 三端演示应用，用于开发与调试 |
+| `platforms/web/` | Web 组件渲染器 + React 桥接层 |
+| `playground/` | 四端演示应用，用于开发与调试 |
 | `scripts/` | 各平台构建脚本 |
 
 ---
@@ -278,6 +279,15 @@ $ANDROID_NDK/toolchains/llvm/prebuilt/<host>/bin/ndk-stack \
 ./scripts/harmony/build.sh -o /path/to/output
 ```
 
+**Web**
+
+```bash
+# 构建 SDK（ESM + CJS + UMD）
+cd platforms/web && npm run build
+
+# 输出目录：platforms/web/dist/
+```
+
 ### 使用 Playground 调试
 
 我们在目录 `playground` 中为每个平台建立了独立的 Playground 工程应用，你可以打开并运行 Playground 工程，体验完整的 A2UI 组件渲染效果。Playground 工程直接引用 AGenUI 源码，并支持进行断点调试。
@@ -311,6 +321,15 @@ agenui.sdk.source=false
 - 选择模拟器，触发代码编译和运行
 
 *项目通过 `srcPath` 引用 `platforms/harmony/agenui/`，因此对 AGenUI 源码的任何修改在下次构建时都会自动生效*
+
+**Web Playground**
+
+```bash
+cd playground/web
+npm install
+npm run dev
+# 打开 http://localhost:5173
+```
 
 ### 接入 AGenUI SDK
 

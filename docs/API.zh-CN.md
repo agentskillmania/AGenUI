@@ -15,6 +15,7 @@
 | Android | `AGenUI.getInstance().initialize(Context applicationContext)` | 必须在创建 `SurfaceManager` 之前调用 |
 | iOS | 无需显式初始化 | 首次创建 `SurfaceManager` 时自动完成 |
 | HarmonyOS | 无需显式初始化 | 首次创建 `SurfaceManager` 时自动完成 |
+| Web | `AGenUI.initialize(options?: { wasmUrl?: string })` | 异步加载 WASM 解析器，可选自定义 WASM URL |
 
 ```java
 // Android — 在 Application.onCreate() 中调用
@@ -72,6 +73,7 @@ AGenUI.setDayNightMode('dark');
 | Android | `ThemeException`（受检异常） | 主题 JSON 格式错误时抛出 |
 | iOS | `AGenUIError`（返回值） | `result == false` 时表示失败，见 `message` 字段 |
 | HarmonyOS | `boolean`（返回值） | 返回 `false` 表示注册失败 |
+| Web | 抛出 `Error` | 无效 JSON 时同步抛出 |
 
 ```java
 // Android

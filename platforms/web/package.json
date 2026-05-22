@@ -1,5 +1,5 @@
 {
-  "name": "@agenui/web",
+  "name": "@agentskillmania/agenui",
   "version": "0.9.10",
   "description": "AGenUI Web Platform SDK — React + antd + antv rendering for A2UI protocol",
   "type": "module",
@@ -15,8 +15,7 @@
     "./dist/agenui_parser.wasm": "./dist/agenui_parser.wasm"
   },
   "sideEffects": [
-    "src/index.ts",
-    "src/components/index.ts"
+    "dist/agenui-web.*.js"
   ],
   "files": [
     "dist"
@@ -29,7 +28,8 @@
     "dev": "vite",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "npm run build:all"
   },
   "peerDependencies": {
     "react": "^18.0.0",

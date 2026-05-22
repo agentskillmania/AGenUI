@@ -21,8 +21,9 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc --noEmit && vite build && npm run copy:wasm",
+    "build": "tsc --noEmit && vite build && npm run copy:wasm && npm run copy:skills",
     "copy:wasm": "cp src/bridge/agenui_parser.wasm dist/agenui_parser.wasm",
+    "copy:skills": "cp -r ../../skills dist/skills",
     "build:wasm": "bash wasm/build.sh",
     "build:all": "npm run build:wasm && npm run build",
     "dev": "vite",

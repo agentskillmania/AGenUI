@@ -7,8 +7,8 @@ export const Divider: React.FC<AGenUIComponentProps> = ({ properties, children }
 
   return (
     <AntDivider
-      orientation={orientation as 'left' | 'right' | 'center'}
-      type={type as 'horizontal' | 'vertical'}
+      orientation={orientation as 'horizontal' | 'vertical' | undefined}
+      titlePlacement={type as 'left' | 'right' | 'center' | undefined}
       dashed={dashed as boolean}
       plain={plain as boolean}
       style={style as React.CSSProperties}

@@ -123,7 +123,7 @@ export const AGenUISurface: React.FC<AGenUISurfaceProps> = ({
 
       return (
         <React.Fragment key={id}>
-          {renderer({
+          {React.createElement(renderer, {
             id,
             type,
             properties: properties as Record<string, unknown>,

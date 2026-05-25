@@ -51,7 +51,7 @@ set(EMSCRIPTEN_FLAGS
     "-s EXPORTED_RUNTIME_METHODS=['ccall','cwrap','UTF8ToString','stringToUTF8','lengthBytesUTF8']"
     "-s ENVIRONMENT=web"
     "-s FILESYSTEM=0"
-    "-s SINGLE_FILE=0"
+    "-s SINGLE_FILE=1"
     "-O3"
     "-flto"
 )
@@ -75,13 +75,10 @@ set_target_properties(agenui_parser PROPERTIES
     LINK_FLAGS "-lembind"
 )
 
-# Post-build: copy outputs to the web SDK src directory
+# Post-build: copy JS output to the web SDK src directory
 add_custom_command(TARGET agenui_parser POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
         "${CMAKE_CURRENT_BINARY_DIR}/agenui_parser.js"
         "${CMAKE_CURRENT_SOURCE_DIR}/../src/bridge/agenui_parser.js"
-    COMMAND ${CMAKE_COMMAND} -E copy
-        "${CMAKE_CURRENT_BINARY_DIR}/agenui_parser.wasm"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../src/bridge/agenui_parser.wasm"
-    COMMENT "Copying WASM outputs to bridge directory"
+    COMMENT "Copying WASM JS glue to bridge directory"
 )

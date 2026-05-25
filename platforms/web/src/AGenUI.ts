@@ -22,7 +22,7 @@ class AGenUIEngine {
       return;
     }
 
-    await loadWasmModule(config?.wasmUrl);
+    await loadWasmModule();
 
     if (config?.themeConfig) {
       this.themeConfig = config.themeConfig;

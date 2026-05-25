@@ -56,17 +56,14 @@ log_info "Building WASM module..."
 cmake --build "$BUILD_DIR" --parallel "$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)"
 
 # Verify outputs
-if [ -f "$BUILD_DIR/agenui_parser.js" ] && [ -f "$BUILD_DIR/agenui_parser.wasm" ]; then
+if [ -f "$BUILD_DIR/agenui_parser.js" ]; then
     log_info "Build successful!"
     log_info "  JS glue: $BUILD_DIR/agenui_parser.js"
-    log_info "  WASM:    $BUILD_DIR/agenui_parser.wasm"
     
-    # Show file sizes
+    # Show file size
     JS_SIZE=$(du -h "$BUILD_DIR/agenui_parser.js" | cut -f1)
-    WASM_SIZE=$(du -h "$BUILD_DIR/agenui_parser.wasm" | cut -f1)
-    log_info "  JS size:  $JS_SIZE"
-    log_info "  WASM size: $WASM_SIZE"
+    log_info "  JS size (WASM embedded): $JS_SIZE"
 else
-    log_error "Build failed: outputs not found"
+    log_error "Build failed: output not found"
     exit 1
 fi

@@ -172,11 +172,29 @@ export class SurfaceManager {
   }
 
   private processComponentUpdate(result: ParseResult): void {
-    if (!result.componentJson || !result.surfaceId) return;
+    if (!result.componentJson) return;
 
-    // ComponentUpdate 类型表示单个组件从 updateComponents 流式提取而来
-    // 使用增量更新，避免覆盖已有组件
-    this.engine.updateComponent(result.surfaceId, result.componentJson);
+    try {
+      const parsed = JSON.parse(result.componentJson);
+
+      // WASM parser may return full updateComponents envelope as ComponentUpdate type.
+      // Re-route to processNormalEvent which handles the envelope correctly.
+      if (parsed.updateComponents) {
+        this.processNormalEvent({
+          type: 'NormalEvent',
+          eventType: 'UpdateComponents',
+          eventJson: result.componentJson,
+        });
+        return;
+      }
+
+      // Single component update
+      if (result.surfaceId && parsed.id) {
+        this.engine.updateComponent(result.surfaceId, result.componentJson);
+      }
+    } catch {
+      // Ignore parse errors
+    }
   }
 
   private ensureNotDisposed(): void {
